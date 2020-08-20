@@ -9,11 +9,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Produce image data, age and gender as .npy to training data")
 
-parser.add_argument('-d', '--dir', required=True, dest="dir",help="Directory containing images with namely lebelled")
+parser.add_argument('-d', '--dir', required=True, default='utkfaces', dest="dir",help="Directory containing images with namely lebelled")
 parser.add_argument('-s', '--imgsize', default=224, type=int, dest="size",help="target image size to load")
-parser.add_argument('-g', '--gender', required=True, dest="gender",help="gender label to save as .npy")
-parser.add_argument('-a', '--age', required=True, dest="age",help="age label to save .npy")
-parser.add_argument('-i', '--imgdata', required=True, dest="imgdata",help="img data to save .npy")
+parser.add_argument('-g', '--gender', required=True, default='gender.npy', dest="gender",help="gender label to save as .npy")
+parser.add_argument('-a', '--age', required=True, default='gender.npy', dest="age",help="age label to save .npy")
+parser.add_argument('-i', '--imgdata', required=True, default='imgdata.npy', dest="imgdata",help="img data to save .npy")
+parser.add_argument('-m', '--mode', dest='colormode', default='rgb',help="color mode of photo rgb or grayscale")
 
 args = parser.parse_args()
 
@@ -61,11 +62,14 @@ def get_filewithpath(path):
 def get_label_from_imagelist(image_dir):
     
     file_list = os.listdir(image_dir)
-    bar = Bar("getting label from image names", max=len(file_list))
+    
+    print("number of images: ", len(file_list))
+    
     Bar()
     age = []
     gender = []
     
+    bar = Bar("getting label from image names", max=len(file_list))
     for file in file_list:
         
        age_i, gender_i = extract_age_gender(file)
@@ -80,12 +84,19 @@ def get_label_from_imagelist(image_dir):
 def get_image_data_from_dir(imagedir_path):
     
     imagefile_list = get_filewithpath(imagedir_path)
+    
+    if args.colormode == 'rgb' :
+        channel = 3
+    else:
+        channel = 1
+        
+    image_data = np.empty(shape = (len(imagefile_list),size, size, channel))
+    
+    print("images are being resized to: ", image_data.shape)
+    
     bar = Bar("getting image data from face images", max=len(imagefile_list))
-    
-    image_data = np.empty(shape = (len(imagefile_list),size, size, 3))
-    
     for i in range(len(imagefile_list)):
-        image_data[i] = img_to_array(load_img(imagefile_list[i], color_mode='rgb', target_size=(size,size)))
+        image_data[i] = img_to_array(load_img(imagefile_list[i], color_mode=args.colormode, target_size=(size,size)))
         
         bar.next()
     
