@@ -9,11 +9,11 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Produce image data, age and gender as .npy to training data")
 
-parser.add_argument('-d', '--dir', required=True, default='utkfaces', dest="dir",help="Directory containing images with namely lebelled")
+parser.add_argument('-d', '--dir', default='utkfaces', dest="dir",help="Directory containing images with namely lebelled")
 parser.add_argument('-s', '--imgsize', default=224, type=int, dest="size",help="target image size to load")
-parser.add_argument('-g', '--gender', required=True, default='gender.npy', dest="gender",help="gender label to save as .npy")
-parser.add_argument('-a', '--age', required=True, default='gender.npy', dest="age",help="age label to save .npy")
-parser.add_argument('-i', '--imgdata', required=True, default='imgdata.npy', dest="imgdata",help="img data to save .npy")
+parser.add_argument('-g', '--gender', default='gender.npy', dest="gender",help="gender label to save as .npy")
+parser.add_argument('-a', '--age', default='age.npy', dest="age",help="age label to save .npy")
+parser.add_argument('-i', '--imgdata', default='imgdata.npy', dest="imgdata",help="img data to save .npy")
 parser.add_argument('-m', '--mode', dest='colormode', default='rgb',help="color mode of photo rgb or grayscale")
 
 args = parser.parse_args()
