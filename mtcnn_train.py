@@ -40,11 +40,11 @@ x = MobileNetV2(include_top=False)(input_layer)
 #x = GlobalAveragePooling2D()(x)
 
 gend_branch = Flatten()(x)
-gend_branch = Dense(512, activation='relu')(gend_branch)
+gend_branch = Dense(1024, activation='relu')(gend_branch)
 gender_out = Dense(1, activation='sigmoid', name='gender_out')(gend_branch)
 
 age_branch = Flatten()(x)
-age_branch = Dense(512, activation='relu')(age_branch)
+age_branch = Dense(1024, activation='relu')(age_branch)
 age_out = Dense(1, activation='linear', name='age_out')(age_branch)
 
 model = Model( inputs=input_layer, outputs=[gender_out, age_out])
