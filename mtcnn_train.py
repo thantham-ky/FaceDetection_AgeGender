@@ -1,4 +1,4 @@
-from keras.applications import Xception
+from keras.applications import Xception, MobileNetV2
 from keras.models import  Model
 from keras.layers import Dense, Flatten, Dropout
 from keras.preprocessing.image import ImageDataGenerator
@@ -7,20 +7,21 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
 from keras.optimizers import RMSprop
 
-
+from keras.utils import plot_model
+from keras.utils.vis_utils import pydot
 from sklearn.model_selection import train_test_split
 
 import numpy as np
 import pandas as pd
 
 
-image_data_file = "D:\\thantham\\imgpro\\imgdata.npy"
-age_data_file = "D:\\thantham\\imgpro\\age.npy"
-gender_data_file = "D:\\thantham\\imgpro\\gender.npy"
+image_data_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\imgdata.npy"
+age_data_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\age.npy"
+gender_data_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\gender.npy"
 
-history_file = "D:\\thantham\\imgpro\\history.csv"
-model_file = "D:\\thantham\\imgpro\\model.h5"
-model_checkpointfile = "D:\\thantham\\imgpro\\model_checkpoint.h5"
+history_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\history.csv"
+model_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\model.h5"
+model_checkpointfile = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\model_checkpoint.h5"
 
 print("load data......", end="\n\n\n")
 image_data = np.load(image_data_file)
@@ -65,19 +66,19 @@ model.compile(loss={'gender_out': 'binary_crossentropy', 'age_out': 'mse'}, opti
 
 print("Fitting.....", end="\n\n\n")
 
-history = model.fit_generator(datagen.flow(x_train, y={'gender_out':y_train[:, 0],'age_out':y_train[:, 1]}, batch_size=32),
-                                            steps_per_epoch = len(x_train)/32,
-                                            validation_data= datagen.flow(x_test, y={'gender_out':y_test[:, 0],'age_out':y_test[:, 1]}, batch_size=32),
-                                            validation_steps=len(x_test)/32,
-                                            callbacks= callbacks,
-                                            epochs=100,
-                                            verbose=1,
-                                            workers=4)
+# history = model.fit_generator(datagen.flow(x_train, y={'gender_out':y_train[:, 0],'age_out':y_train[:, 1]}, batch_size=32),
+#                                             steps_per_epoch = len(x_train)/32,
+#                                             validation_data= datagen.flow(x_test, y={'gender_out':y_test[:, 0],'age_out':y_test[:, 1]}, batch_size=32),
+#                                             validation_steps=len(x_test)/32,
+#                                             callbacks= callbacks,
+#                                             epochs=100,
+#                                             verbose=1,
+#                                             workers=4)
 
 # history = model.fit_generator(datagen.flow(x_train, [y_train[:,0], y_train[:, 1]]))
 
-history = model.fit(x_train, y_train, 
-                    validation_data= (x_test, y_train),
+history = model.fit(x_train, {'gender_out':y_train[:, 0],'age_out':y_train[:, 1]}, 
+                    validation_data= (x_test, {'gender_out':y_test[:, 0],'age_out':y_test[:, 1]}),
                     batch_size=32, epochs=100, workers=4, callbacks=callbacks)
 
 hist_df = pd.DataFrame(history.history)
