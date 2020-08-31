@@ -14,14 +14,36 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 
+import argparse
 
-image_data_file = "D:\\thantham\\FaceDetection_AgeGender\\imgdata.npy"
-age_data_file = "D:\\thantham\\FaceDetection_AgeGender\\age.npy"
-gender_data_file = "D:\\thantham\\FaceDetection_AgeGender\\gender.npy"
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--imgdata' , dest='imgdata', default='imgdata.npy')
+parser.add_argument('-a', '--age'  , dest='age', default='age.npy')
+parser.add_argument('-g', '--gender'  , dest='gender', default='gender.npy')
 
-history_file = "D:\\thantham\\FaceDetection_AgeGender\\history.csv"
-model_file = "D:\\thantham\\FaceDetection_AgeGender\\final_model.h5"
-model_checkpointfile = "D:\\thantham\\FaceDetection_AgeGender\\model_checkpoint.h5"
+parser.add_argument('-t', '--trend', dest='hist', default='history.csv')
+parser.add_argument('-m', '--model'  , dest='model', default='final_model.h5')
+parser.add_argument('-c', '--checkpoint'  , dest='checkpoint', default='model_checkpoint.h5')
+
+args = parser.parse_args()
+
+
+# image_data_file = "D:\\thantham\\FaceDetection_AgeGender\\imgdata.npy"
+# age_data_file = "D:\\thantham\\FaceDetection_AgeGender\\age.npy"
+# gender_data_file = "D:\\thantham\\FaceDetection_AgeGender\\gender.npy"
+
+# history_file = "D:\\thantham\\FaceDetection_AgeGender\\history.csv"
+# model_file = "D:\\thantham\\FaceDetection_AgeGender\\final_model.h5"
+# model_checkpointfile = "D:\\thantham\\FaceDetection_AgeGender\\model_checkpoint.h5"
+
+image_data_file = args.imgdata
+age_data_file = args.age
+gender_data_file = args.gender
+
+history_file = args.hist
+model_file = args.model
+model_checkpointfile = args.checkpoint
+
 
 print("load data......", end="\n\n\n")
 image_data = np.load(image_data_file)
