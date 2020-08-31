@@ -15,13 +15,13 @@ import numpy as np
 import pandas as pd
 
 
-image_data_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\imgdata.npy"
-age_data_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\age.npy"
-gender_data_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\gender.npy"
+image_data_file = "D:\\thantham\\FaceDetection_AgeGender\\imgdata.npy"
+age_data_file = "D:\\thantham\\FaceDetection_AgeGender\\age.npy"
+gender_data_file = "D:\\thantham\\FaceDetection_AgeGender\\gender.npy"
 
-history_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\history.csv"
-model_file = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\model.h5"
-model_checkpointfile = "F:\\Facedet_Kwang\\FaceDetection_AgeGender-master\\FaceDetection_AgeGender-master\\model_checkpoint.h5"
+history_file = "D:\\thantham\\FaceDetection_AgeGender\\history.csv"
+model_file = "D:\\thantham\\FaceDetection_AgeGender\\final_model.h5"
+model_checkpointfile = "D:\\thantham\\FaceDetection_AgeGender\\model_checkpoint.h5"
 
 print("load data......", end="\n\n\n")
 image_data = np.load(image_data_file)
@@ -36,28 +36,28 @@ print("train and test set splitting..... ", end="\n\n\n")
 #y = np.array([gender_data, age_data]).transpose()
 y = np.array([gender_data, age_data]).transpose()
 #y = pd.DataFrame([gender_data, age_data]).transpose()
-x_train, x_test, y_train, y_test = train_test_split(image_data, y, test_size=0.2)
+x_train, x_test, y_train, y_test = train_test_split(image_data, y, test_size=0.1)
 
 datagen = ImageDataGenerator(horizontal_flip=True, rotation_range=10, width_shift_range=0.1, height_shift_range=0.1, zoom_range=0.1, rescale=0.1)
 
 
 print("Model constructing.....", end="\n\n\n")
 
-callbacks = [ EarlyStopping(monitor='val_loss', patience=5, verbose=0), 
-              ModelCheckpoint(model_checkpointfile, monitor='val_loss', save_best_only=True, verbose=0),
-              ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=2, verbose=0, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)]
+callbacks = [ EarlyStopping(monitor='loss', patience=10, verbose=1), 
+              ModelCheckpoint(model_checkpointfile, monitor='val_loss', save_best_only=True, verbose=1),
+              ReduceLROnPlateau(monitor='loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)]
 
 
 base_model = Xception(input_shape=x_train.shape[1:], include_top=False, pooling='avg')
 x = base_model.output
 
-gend_branch = Dense(256, activation='relu')(x)
-gend_branch = Dropout(0.5)(gend_branch)
+gend_branch = Dense(512, activation='relu')(x)
+gend_branch = Dropout(0.2)(gend_branch)
 gender_out = Dense(1, activation='sigmoid', name='gender_out')(gend_branch)
 
 
-age_branch = Dense(256, activation='relu')(x)
-age_branch = Dropout(0.5)(age_branch)
+age_branch = Dense(512, activation='relu')(x)
+age_branch = Dropout(0.2)(age_branch)
 age_out = Dense(1, activation='linear', name='age_out')(age_branch)
 
 model = Model(inputs=base_model.input, outputs=[gender_out, age_out])
