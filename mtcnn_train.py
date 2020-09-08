@@ -3,9 +3,9 @@ from keras.models import  Model
 from keras.layers import Dense, Flatten, Dropout
 from keras.preprocessing.image import ImageDataGenerator
 
-from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 
 from keras.utils import plot_model
 from keras.utils.vis_utils import pydot
@@ -66,25 +66,27 @@ datagen = ImageDataGenerator(horizontal_flip=True, rotation_range=10, width_shif
 print("Model constructing.....", end="\n\n\n")
 
 callbacks = [ EarlyStopping(monitor='loss', patience=10, verbose=1), 
-              ModelCheckpoint(model_checkpointfile, monitor='val_loss', save_best_only=True, verbose=1),
-              ReduceLROnPlateau(monitor='loss', factor=0.1, patience=2, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)]
+              ModelCheckpoint(model_checkpointfile, monitor='loss', save_best_only=True, verbose=1),
+              ReduceLROnPlateau(monitor='loss', factor=0.1, patience=3, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)]
 
 
-base_model = Xception(input_shape=x_train.shape[1:], include_top=False, pooling='avg')
+base_model = Xception(input_shape=x_train.shape[1:], include_top=False, pooling='avg', weights='imagenet')
 x = base_model.output
 
-gend_branch = Dense(512, activation='relu')(x)
-gend_branch = Dropout(0.2)(gend_branch)
+#x = Flatten()(x)
+
+gend_branch = Dense(256, activation='relu')(x)
+gend_branch = Dropout(0.5)(gend_branch)
 gender_out = Dense(1, activation='sigmoid', name='gender_out')(gend_branch)
 
 
-age_branch = Dense(512, activation='relu')(x)
-age_branch = Dropout(0.2)(age_branch)
+age_branch = Dense(256, activation='relu')(x)
+age_branch = Dropout(0.5)(age_branch)
 age_out = Dense(1, activation='linear', name='age_out')(age_branch)
 
 model = Model(inputs=base_model.input, outputs=[gender_out, age_out])
 
-model.compile(loss={'gender_out': 'binary_crossentropy', 'age_out': 'mse'}, optimizer=RMSprop(learning_rate=0.0001), metrics=['accuracy'])
+model.compile(loss={'gender_out': 'binary_crossentropy', 'age_out': 'mse'}, optimizer=Adam(learning_rate=0.0001), metrics={'age_out':'mae', 'gender_out':'accuracy'})
 
 print("Fitting.....", end="\n\n\n")
 
