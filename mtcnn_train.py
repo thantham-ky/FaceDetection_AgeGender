@@ -58,54 +58,61 @@ print("train and test set splitting..... ", end="\n\n\n")
 #y = np.array([gender_data, age_data]).transpose()
 y = np.array([gender_data, age_data]).transpose()
 #y = pd.DataFrame([gender_data, age_data]).transpose()
-x_train, x_test, y_train, y_test = train_test_split(image_data, y, test_size=0.1)
+x_train, x_test, y_train, y_test = train_test_split(image_data, y, test_size=0.1, random_state=0)
 
-datagen = ImageDataGenerator(horizontal_flip=True, rotation_range=10, width_shift_range=0.1, height_shift_range=0.1, zoom_range=0.1, rescale=0.1)
+datagen = ImageDataGenerator(horizontal_flip=True, 
+                             rotation_range=10, 
+                             width_shift_range=0.1, 
+                             height_shift_range=0.1, 
+                             zoom_range=0.1, 
+                             rescale=0.1)
 
 
 print("Model constructing.....", end="\n\n\n")
 
-callbacks = [ EarlyStopping(monitor='loss', patience=10, verbose=1), 
+callbacks = [ #EarlyStopping(monitor='loss', patience=10, verbose=1), 
               ModelCheckpoint(model_checkpointfile, monitor='loss', save_best_only=True, verbose=1),
-              ReduceLROnPlateau(monitor='loss', factor=0.1, patience=3, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)]
+              ReduceLROnPlateau(monitor='loss', factor=0.1, patience=5, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)]
 
 
-base_model = Xception(input_shape=x_train.shape[1:], include_top=False, pooling='avg', weights='imagenet')
+base_model = MobileNetV2(input_shape=x_train.shape[1:], include_top=False, pooling='avg', weights='imagenet')
 x = base_model.output
+x = Dense(1024, activation='relu')(x)
 
-#x = Flatten()(x)
-
-gend_branch = Dense(256, activation='relu')(x)
-gend_branch = Dropout(0.5)(gend_branch)
+#gend_branch = Dense(1024, activation='relu')(x)
+gend_branch = Dropout(0.5)(x)
 gender_out = Dense(1, activation='sigmoid', name='gender_out')(gend_branch)
 
 
-age_branch = Dense(256, activation='relu')(x)
-age_branch = Dropout(0.5)(age_branch)
-age_out = Dense(1, activation='linear', name='age_out')(age_branch)
+#age_branch = Dense(1024, activation='relu')(x)
+age_branch = Dropout(0.5)(x)
+age_out = Dense(1, name='age_out')(age_branch)
 
-model = Model(inputs=base_model.input, outputs=[gender_out, age_out])
+age_model = Model(inputs=base_model.input, outputs=age_out)
+gender_model = Model(inputs=base_model.input, outputs=gender_out)
 
-model.compile(loss={'gender_out': 'binary_crossentropy', 'age_out': 'mse'}, optimizer=Adam(learning_rate=0.0001), metrics={'age_out':'mae', 'gender_out':'accuracy'})
+age_model.compile(loss={'age_out': 'mse'}, optimizer=Adam(learning_rate=0.0001), metrics={'age_out':'mae'})
+gender_model.compile(loss={'gender_out': 'binary_crossentropy'}, optimizer=Adam(learning_rate=0.0001), metrics={'gender_out':'accuracy'})
+
 
 print("Fitting.....", end="\n\n\n")
 
-# history = model.fit_generator(datagen.flow(x_train, y={'gender_out':y_train[:, 0],'age_out':y_train[:, 1]}, batch_size=32),
-#                                             steps_per_epoch = len(x_train)/32,
-#                                             validation_data= datagen.flow(x_test, y={'gender_out':y_test[:, 0],'age_out':y_test[:, 1]}, batch_size=32),
-#                                             validation_steps=len(x_test)/32,
-#                                             callbacks= callbacks,
-#                                             epochs=100,
-#                                             verbose=1,
-#                                             workers=4)
+age_history = age_model.fit_generator(datagen.flow(x_train, y_train[:,1]),
+                                      steps_per_epoch=x_train.shape[0]//32,epochs=100,
+                                      validation_data=datagen.flow(x_test, y_test[:,1]),
+                                      workers=-1,use_multiprocessing=True)
 
-# history = model.fit_generator(datagen.flow(x_train, [y_train[:,0], y_train[:, 1]]))
+gender_history = age_model.fit_generator(datagen.flow(x_train, y_train[:,0]),
+                                      steps_per_epoch=x_train.shape[0]//32,epochs=100,
+                                      validation_data=datagen.flow(x_test, y_test[:,0]),
+                                      workers=-1,use_multiprocessing=True)
+# history = model.fit_generator(datagen)
 
-history = model.fit(x_train, {'gender_out':y_train[:, 0],'age_out':y_train[:, 1]}, 
-                    validation_data= (x_test, {'gender_out':y_test[:, 0],'age_out':y_test[:, 1]}),
-                    batch_size=32, epochs=100, workers=4, callbacks=callbacks)
+# history = model.fit(x_train, {'gender_out':y_train[:, 0],'age_out':y_train[:, 1]}, 
+#                     validation_data= (x_test, {'gender_out':y_test[:, 0],'age_out':y_test[:, 1]}),
+#                     batch_size=32, epochs=100, workers=4, callbacks=callbacks)
 
-hist_df = pd.DataFrame(history.history)
-hist_df.to_csv(history_file)
+# age_hist_df = pd.DataFrame(history.history)
+# age_hist_df.to_csv(history_file)
 
-model.save(model_file)
+# model.save(model_file)
