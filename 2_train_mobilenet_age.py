@@ -51,9 +51,9 @@ datagen = ImageDataGenerator(horizontal_flip=True,
                              brightness_range=[0.1,0.2])
 
 print("[PROCESS]: construct model")
-base_model = MobileNetV2(input_shape=x_train.shape[1:], include_top=False, pooling='avg', weights='imagenet')
+base_model = Xception(input_shape=x_train.shape[1:], include_top=False, pooling='avg')
 x = base_model.output
-x = Dense(4096, activation='relu')(x)
+x = Dense(2048, activation='relu')(x)
 x = Dropout(0.5)(x)
 age_out = Dense(1, name='age_out')(x)
 age_model = Model(inputs=base_model.input, outputs=age_out)
@@ -64,8 +64,8 @@ age_model.compile(loss='mse', optimizer=Adam(learning_rate=0.0001), metrics=['ma
 print("[PROCESS] : model fitting")
 age_history = age_model.fit_generator(datagen.flow(x_train, y_train),
                                       steps_per_epoch=x_train.shape[0]//32,epochs=epoch,
-                                      validation_data=datagen.flow(x_test, y_test),
-                                      workers=n_processor, use_multiprocessing=True)
+                                      validation_data=datagen.flow(x_train, y_train),
+                                      workers=n_processor)
 
 print("[PROCESS] : save history - ", age_history_file)
 age_hist_df = pd.DataFrame(age_history.history)

@@ -51,9 +51,9 @@ datagen = ImageDataGenerator(horizontal_flip=True,
                              brightness_range=[0.1,0.2])
 
 print("[PROCESS]: construct model")
-base_model = MobileNetV2(input_shape=x_train.shape[1:], include_top=False, pooling='avg', weights='imagenet')
+base_model = Xception(input_shape=x_train.shape[1:], include_top=False, pooling='avg', weights='imagenet')
 x = base_model.output
-x = Dense(4096, activation='relu')(x)
+x = Dense(2048, activation='relu')(x)
 x = Dropout(0.5)(x)
 gender_out = Dense(1, activation='sigmoid', name='gender_out')(x)
 gender_model = Model(inputs=base_model.input, outputs=gender_out)
@@ -65,7 +65,7 @@ print("[PROCESS] : model fitting")
 gender_history = gender_model.fit_generator(datagen.flow(x_train, y_train),
                                       steps_per_epoch=x_train.shape[0]//32,epochs=epoch,
                                       validation_data=datagen.flow(x_test, y_test),
-                                      workers=n_processor, use_multiprocessing=True)
+                                      workers=n_processor)
 
 print("[PROCESS] : save history - ", gender_history_file)
 gender_hist_df = pd.DataFrame(gender_history.history)
